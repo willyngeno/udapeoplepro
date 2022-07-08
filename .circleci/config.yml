@@ -1,9 +1,9 @@
 version: 2
 jobs:
   build:
-    build-frontend: 
+    working_directory: ~/repo
     docker:
-    - image: circleci/node:13.8.0
+    - image: circleci/node:12-browsers
     steps:
     - checkout
     - restore_cache:
@@ -27,7 +27,19 @@ jobs:
         root: .
         paths:
         - .
-
+  deploy:
+    working_directory: ~/repo
+    docker:
+    - image: innovatorjapan/awscli:latest
+    steps:
+    - attach_workspace:
+        at: .
+    - run:
+        name: Deploy
+        command: |
+          if [ $CIRCLE_BRANCH = 'circleci-project-setup' ]; then
+            aws s3 sync build s3://example-react-from-willy --delete --exact-timestamps;
+          fi
 workflows:
   build_and_deploy:
     jobs:
@@ -36,5 +48,11 @@ workflows:
           branches:
             only:
             - circleci-project-setup
-    
+    - deploy:
+        filters:
+          branches:
+            only:
+            - circleci-project-setup
+        requires:
+        - build
   
