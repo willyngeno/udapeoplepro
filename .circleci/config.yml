@@ -1,58 +1,40 @@
-version: 2
+version: 2.
 jobs:
-  build:
-    working_directory: ~/repo
+  build-frontend:
     docker:
-    - image: circleci/node:12-browsers
+      - image: circleci/node:13.8.0
     steps:
-    - checkout
-    - restore_cache:
-        keys:
-        - v1-dependencies-{{ checksum "package-lock.json" }}
-        - v1-dependencies-
-    - run:
-        name: Install dependencies
-        command: npm install
-    - save_cache:
-        key: v1-dependencies-{{ checksum "package-lock.json" }}
-        paths:
-        - node_modules
-    - run:
-        name: Build
-        command: |
-          if [ $CIRCLE_BRANCH = 'circleci-project-setup' ]; then
-            npm run build
-          fi
-    - persist_to_workspace:
-        root: .
-        paths:
-        - .
-  deploy:
-    working_directory: ~/repo
+      - checkout
+      - restore_cache:
+          keys: [frontend-build]
+      - run:
+          name: Build front-end
+          command: |
+            # Your code here
+            exit 1
+      - save_cache:
+          paths: [frontend/node_modules]
+          key: frontend-build
+
+  build-backend:
     docker:
-    - image: innovatorjapan/awscli:latest
+      - image: circleci/node:13.8.0
     steps:
-    - attach_workspace:
-        at: .
-    - run:
-        name: Deploy
-        command: |
-          if [ $CIRCLE_BRANCH = 'circleci-project-setup' ]; then
-            aws s3 sync build s3://example-react-from-willy --delete --exact-timestamps;
-          fi
+      - checkout
+      - restore_cache:
+          keys: [backend-build]
+      - run:
+          name: Back-end build
+          command: |
+             # Your code here
+             exit 1
+      - save_cache:
+          paths: [backend/node_modules]
+          key: backend-build
+
 workflows:
-  build_and_deploy:
+  default:
     jobs:
-    - build:
-        filters:
-          branches:
-            only:
-            - circleci-project-setup
-    - deploy:
-        filters:
-          branches:
-            only:
-            - circleci-project-setup
-        requires:
-        - build
-  
+      - build-frontend
+      - build-backend
+      
